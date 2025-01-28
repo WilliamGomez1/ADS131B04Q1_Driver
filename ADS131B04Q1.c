@@ -50,8 +50,11 @@ int ADS131B04Q1_CheckConnection(){
 			return status;
 	}
 	status = HAL_SPI_Receive (ADS131_hspi, RxData, 2, 1000);
-
-	return 0;
+	//todo: make sure MSB goes into RxData[0]
+	if(RxData[0] == 0b01000100){
+		return 0;
+	}
+	return 1;
 }
 
 
