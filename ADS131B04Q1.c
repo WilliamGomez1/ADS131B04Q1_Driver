@@ -44,7 +44,7 @@ int ADS131B04Q1_CheckConnection(){
 	//drive CS line low
 	HAL_GPIO_WritePin(ADS131pinLetter, ADS131_PIN_Number, GPIO_PIN_RESET);
 
-	//send no command, which the ADS131B04 will read as "NULL" to which it will respond with a status byte
+	//send read command, which will read ID register
 	status = HAL_SPI_Transmit(ADS131_hspi, TxCommand, 2, HAL_MAX_DELAY);
 	if(status == HAL_ERROR){
 			return status;
