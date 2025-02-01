@@ -1,8 +1,8 @@
 /*
  * ADS131B04Q1.h
  *
- *  Created on: Jan 25, 2025
- *      Author: willi
+ *  Created on: Jan 31, 2025
+ *      Author: William Gomez
  */
 
 #ifndef ADS131B04Q1_DRIVER_ADS131B04Q1_H_
