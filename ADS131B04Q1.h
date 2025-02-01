@@ -24,6 +24,7 @@ int ADS131B04Q1_Init(SPI_HandleTypeDef* hspi, GPIO_TypeDef* GPIOpinLetter, uint1
 int ADS131B04Q1_CheckConnection();
 
 // Reads voltage calculated from ADS131B04-Q1, returns 0 if successful, 1 if failed
+// Writes signed 2s complement number as a fraction of range to each channelReading pointer
 int ADS131B04Q1_ReadChannels(int32_t *channelReading1, int32_t *channelReading2, int32_t *channelReading3, int32_t *channelReading4);
 
 #endif /* ADS131B04Q1_DRIVER_ADS131B04Q1_H_ */
