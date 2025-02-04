@@ -21,7 +21,7 @@ status = ADS131B04Q1_OSRConfig(7);
   if(status == 1){
 	return 1;
   }
-status = ADS131B04Q1_Calibrate(0, 0.1, 3, 3, 4);
+status = ADS131B04Q1_Calibrate(0, 0.0002, 3, 3.0002, 1);
   if(status == 1){
 	return 1;
   }
