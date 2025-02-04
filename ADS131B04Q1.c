@@ -5,7 +5,6 @@
  *      Author: William Gomez
  */
 #include "ADS131B04Q1.h"
-#include <math.h>
 
 // Define external and global variables
 SPI_HandleTypeDef *ADS131_hspi;
@@ -84,7 +83,7 @@ int ADS131B04Q1_CheckConnection() {
     return 1;
 }
 
-/**
+/*
  * @brief
  * Configures the ADC to use the specified oversampling ratio.
  * @param configNum
