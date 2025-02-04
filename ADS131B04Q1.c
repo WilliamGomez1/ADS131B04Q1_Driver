@@ -6,10 +6,19 @@
  */
 #include "ADS131B04Q1.h"
 
-//Define external variables
+//Define external and global variables
 SPI_HandleTypeDef* ADS131_hspi;
 GPIO_TypeDef* ADS131pinLetter;
 uint16_t ADS131_PIN_Number;
+
+float gainChannel1 = 1;
+float offsetChannel1 = 0;
+float gainChannel2 = 1;
+float offsetChannel2 = 0;
+float gainChannel3 = 1;
+float offsetChannel3 = 0;
+float gainChannel4 = 1;
+float offsetChannel4 = 0;
 
 int ADS131B04Q1_Init(SPI_HandleTypeDef* hspi, GPIO_TypeDef* GPIOpinLetter, uint16_t GPIO_PIN_Number){
 	ADS131_hspi = hspi;
@@ -84,6 +93,53 @@ int ADS131B04Q1_CheckConnection(){
 	return 1;
 }
 
+int ADS131B04Q1_OSRConfig(int configNum){
+	/*
+	  	Modulator oversampling ratio selection
+		000b = 128
+		001b = 256
+		010b = 512
+		011b = 1024
+		100b = 2048
+		101b = 4096
+		110b = 8192
+		111b = 16384
+	 */
+	int status = 0;
+	uint8_t OSRConfigByte = 0;
+	if (configNum < 0 || configNum > 7) {
+	        return 1;
+	 } else{
+	 OSRConfigByte = (uint8_t)configNum;
+	 }
+
+	OSRConfigByte = (OSRConfigByte << 2) + 2;
+
+	//drive CS line low
+	HAL_GPIO_WritePin(ADS131pinLetter, ADS131_PIN_Number, GPIO_PIN_RESET);
+
+	//prepare write command
+	//Write command: 011, register = 000011, number of extra registers = 0000000
+	uint8_t writeCommand[3] = {0b01100001, 0b10000000, 0};
+	status = HAL_SPI_Transmit(ADS131_hspi, writeCommand, 3, HAL_MAX_DELAY);
+	if(status == HAL_ERROR){
+		return status;
+	}
+
+	//Configure CLOCK: 0000 = reserved, 1111 = all channels enabled
+	//writeOSR byte: 0 = internal clk, 00 = reserved, writeOSR[2:4] = OSR config, 10 = high resolution
+	uint8_t writeOSR[3] = {0b00001111, 0, 0};
+	writeOSR[1] = OSRConfigByte;
+	status = HAL_SPI_Transmit(ADS131_hspi, writeOSR, 3, HAL_MAX_DELAY);
+	if(status == HAL_ERROR){
+		return status;
+	}
+	//drive CS line high
+	HAL_GPIO_WritePin(ADS131pinLetter, ADS131_PIN_Number, GPIO_PIN_SET);
+
+	return 0;
+}
+
 //helper function to convert ADC data from binary to a signed value
 int32_t ADS131B04Q1_convertReading(uint32_t value) {
 	// Extract the lower 24 bits
@@ -142,6 +198,60 @@ int ADS131B04Q1_ReadChannels(int32_t *channelReading1, int32_t *channelReading2,
 	*channelReading2 = ADS131B04Q1_convertReading(*channelReading2);
 	*channelReading3 = ADS131B04Q1_convertReading(*channelReading3);
 	*channelReading4 = ADS131B04Q1_convertReading(*channelReading4);
+	return 0;
+}
+
+int ADS131B04Q1_Calibrate(float x1, float y1, float x2, float y2, int channelNum){
+	//slope
+ 	float gain = (y2 - y1)/(x2 - x1);
+	//y-intercept
+    float offset = y1-(gain)*x1;
+
+    //depending on channel number, store in respective variable
+    switch (channelNum){
+    case 1:
+    	gainChannel1 = gain;
+    	offsetChannel1 = offset;
+    	break;
+    case 2:
+        gainChannel2 = gain;
+        offsetChannel2 = offset;
+        break;
+    case 3:
+        gainChannel3 = gain;
+        offsetChannel3 = offset;
+        break;
+    case 4:
+        gainChannel4 = gain;
+        offsetChannel4 = offset;
+        break;
+    }
+    return 0;
+
+}
+
+//function to apply gain and conversion to 2s complement and return float
+float ADS131B04Q1_RawToVoltage(int channelReading, int channelNum){
+
+	float channelVoltage = ((float)channelReading/(1<<23))*1.2;
+	switch (channelNum){
+	    case 1:
+	    	channelVoltage += offsetChannel1;
+	    	channelVoltage *= gainChannel1;
+	    	return channelVoltage;
+	    case 2:
+	    	channelVoltage += offsetChannel2;
+	    	channelVoltage *= gainChannel2;
+	    	return channelVoltage;
+	    case 3:
+	    	channelVoltage += offsetChannel3;
+	    	channelVoltage *= gainChannel3;
+	    	return channelVoltage;
+	    case 4:
+	    	channelVoltage += offsetChannel4;
+	    	channelVoltage *= gainChannel4;
+	        return channelVoltage;
+	    }
 	return 0;
 }
 
